@@ -119,6 +119,14 @@ class Tensor:
         return self._tensor.shape
 
     @property
+    def strides(self) -> Sequence[int]:
+        """
+        Returns:
+             tuple : strides of the tensor
+        """
+        return self._tensor.strides
+
+    @property
     def size(self) -> int:
         """
         Returns:
@@ -234,7 +242,7 @@ class Tensor:
         return Copy.apply(self)
 
     def __repr__(self) -> str:
-        return self._tensor.to_string()
+        return "unique_id: " + str(self.unique_id) + "," + self._tensor.to_string()
 
     def __getitem__(self, key: Union[int, UserIndex]) -> float:
         key2 = (key,) if isinstance(key, int) else key

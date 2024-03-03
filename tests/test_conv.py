@@ -1,3 +1,5 @@
+import random
+import hypothesis
 import pytest
 from hypothesis import given, settings
 
@@ -23,7 +25,6 @@ def test_conv1d_simple() -> None:
 @pytest.mark.task4_1
 @given(tensors(shape=(1, 1, 6)), tensors(shape=(1, 1, 4)))
 def test_conv1d(input: Tensor, weight: Tensor) -> None:
-    print(input, weight)
     minitorch.grad_check(minitorch.Conv1dFun.apply, input, weight)
 
 
@@ -42,7 +43,7 @@ def test_conv(input: Tensor, weight: Tensor) -> None:
 
 @pytest.mark.task4_2
 @given(tensors(shape=(2, 1, 6, 6)), tensors(shape=(1, 1, 2, 4)))
-@settings(max_examples=10)
+@settings(max_examples=100)
 def test_conv_batch(input: Tensor, weight: Tensor) -> None:
     minitorch.grad_check(minitorch.Conv2dFun.apply, input, weight)
 

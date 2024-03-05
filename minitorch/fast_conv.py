@@ -286,7 +286,7 @@ def _tensor_conv2d_matmul(
         input (Tensor): input tensor, to be unroll
         weight (Tensor): weight tensor, to be permute
         reverse (bool): anchor weight at top-left or bottom-right
-    
+
     Returns:
         output tensor
     """
@@ -297,7 +297,6 @@ def _tensor_conv2d_matmul(
         weight.contiguous().view(out_channels, in_channels * kh * kw).permute(1, 0)
     )
     new_input = input.zeros(shape=(batch, height, width, in_channels * kh * kw))
-    # print(new_input.shape)
     olds0, olds1, olds2, olds3 = (
         input.strides[0],
         input.strides[1],

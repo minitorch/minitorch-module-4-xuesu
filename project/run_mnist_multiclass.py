@@ -41,8 +41,9 @@ class Conv2d(minitorch.Module):
         self.bias = RParam(out_channels, 1, 1)
 
     def forward(self, input):
-        # TODO: Implement for Task 4.5.
-        raise NotImplementedError("Need to implement for Task 4.5")
+        _ans = minitorch.fast_conv.conv2d(input, self.weights.value)
+        _ans = _ans + self.bias.value
+        return _ans
 
 
 class Network(minitorch.Module):
@@ -62,17 +63,33 @@ class Network(minitorch.Module):
 
     def __init__(self):
         super().__init__()
-
-        # For vis
         self.mid = None
         self.out = None
-
-        # TODO: Implement for Task 4.5.
-        raise NotImplementedError("Need to implement for Task 4.5")
+        self.conv1 = Conv2d(1, 4, 3, 3)
+        self.conv2 = Conv2d(4, 8, 3, 3)
+        self.linear1 = Linear(392, 64)
+        self.linear2 = Linear(64, C)
 
     def forward(self, x):
-        # TODO: Implement for Task 4.5.
-        raise NotImplementedError("Need to implement for Task 4.5")
+        batch_num, _, height, width = x.shape
+        assert height == H and width == W
+        self.mid = self.conv1.forward(x)
+        conv_out1 = (
+            self.mid.relu()
+        )  # if forget the relu followed conv, The gradient will not converge and will explode quickly, resulting in inf and then nan
+        self.out = self.conv2.forward(conv_out1)
+        conv_out2 = self.out.relu()
+        pool_out = minitorch.nn.avgpool2d(conv_out2, (4, 4))
+        assert pool_out.shape == (batch_num, 8, 7, 7)
+        flatten_out = pool_out.view(batch_num, 392)
+        linear1_out = self.linear1.forward(flatten_out)
+        relu_drop_out = minitorch.nn.dropout(
+            linear1_out.relu(), 0.25, ignore=not self.training
+        )
+        linear2_out = self.linear2.forward(relu_drop_out)
+        output = minitorch.nn.logsoftmax(linear2_out, 1)
+        assert len([ele for ele in output._tensor._storage if ele != ele]) == 0
+        return output
 
 
 def make_mnist(start, stop):
@@ -135,6 +152,8 @@ class ImageTrain:
                 loss.view(1).backward()
 
                 total_loss += loss[0]
+                if total_loss > 1e5:
+                    print("ERR: strange loss!")
                 losses.append(total_loss)
 
                 # Update
@@ -162,6 +181,7 @@ class ImageTrain:
                                 if out[i, j] > m:
                                     ind = j
                                     m = out[i, j]
+                            assert ind != -1
                             if y[i, ind] == 1.0:
                                 correct += 1
                     log_fn(epoch, total_loss, correct, BATCH, losses, model)

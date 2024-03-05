@@ -28,18 +28,15 @@ def tile(
         height % kh == 0
     )  # don't know why minitorch simplify the pool and provide us the pad_value
     assert width % kw == 0
-    new_height = height // kh
-    new_width = width // kw
+    new_height = int(height // kh)
+    new_width = int(width // kw)
+    _ans = input.contiguous().view(batch, channel, new_height, kh, new_width, kw)
+    _ans = _ans.permute(0, 1, 2, 4, 3, 5)
     _ans = (
-        input.contiguous()
-        .view(batch, channel, new_height, kh, new_width, kw)
-        .permute(0, 1, 2, 4, 3, 5)
-        .contiguous()
-        .view(batch, channel, new_height, new_width, kh * kw),
-        new_height,
-        new_width,
-    )
-    return _ans
+        _ans.contiguous()
+    )  # !!!!!!!!if there is any assert or we put the array declaration outside prange, segment fault.
+    _ans = _ans.view(batch, channel, new_height, new_width, kh * kw)
+    return _ans, new_height, new_width
 
 
 def avgpool2d(input: Tensor, kernel: Tuple[int, int]) -> Tensor:
@@ -169,7 +166,7 @@ def dropout(input: Tensor, rate: float, ignore: bool = False) -> Tensor:
 
     Args:
         input : input tensor
-        rate : probability [0, 1) of keeping the value at each position
+        rate : probability [0, 1) of dropping out the value at each position
         ignore : skip dropout, i.e. do nothing at all
 
     Returns:

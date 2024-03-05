@@ -34,8 +34,9 @@ class Conv1d(minitorch.Module):
         self.bias = RParam(1, out_channels, 1)
 
     def forward(self, input):
-        # TODO: Implement for Task 4.5.
-        raise NotImplementedError("Need to implement for Task 4.5")
+        output0 = minitorch.fast_conv.conv1d(input, self.weights.value)
+        output = output0 + self.bias.value
+        return output
 
 
 class CNNSentimentKim(minitorch.Module):
@@ -60,16 +61,41 @@ class CNNSentimentKim(minitorch.Module):
         dropout=0.25,
     ):
         super().__init__()
+        self.dropout_rate = dropout
         self.feature_map_size = feature_map_size
-        # TODO: Implement for Task 4.5.
-        raise NotImplementedError("Need to implement for Task 4.5")
+        self.embedding_size = embedding_size
+        self.filter_sizes = filter_sizes
+        self.convs = []
+        self.linears = []
+        for i, filter_size in enumerate(filter_sizes):
+            conv = Conv1d(embedding_size, feature_map_size, filter_size)
+            setattr(self, f"convs_{i}", conv)
+            self.convs.append(conv)
+        self.linear = Linear(feature_map_size, 1)
 
-    def forward(self, embeddings):
+    def forward(self, emb_v, ignore_dropout=False):
         """
-        embeddings tensor: [batch x sentence length x embedding dim]
+        emb_v tensor: [batch x sentence length x embedding dim]
         """
-        # TODO: Implement for Task 4.5.
-        raise NotImplementedError("Need to implement for Task 4.5")
+        batch_num, max_sentence_len, embedding_size = emb_v.shape
+        emb_v = emb_v.permute(0, 2, 1)
+        conv_outs = [conv.forward(emb_v) for conv in self.convs]
+        pool_outs = [
+            minitorch.nn.maxpool2d(
+                conv_out.view(batch_num, 1, self.feature_map_size, conv_out.shape[2]),
+                (1, conv_out.shape[2]),
+            ).view(batch_num, self.feature_map_size)
+            for conv_out in conv_outs
+        ]
+        pool_out = pool_outs[0]
+        for i in range(1, len(pool_outs)):
+            pool_out += pool_outs[i]
+        relu_out = minitorch.nn.dropout(
+            pool_out.relu(), self.dropout_rate, ignore=ignore_dropout
+        )
+        linear_out = self.linear.forward(relu_out)
+        output = linear_out.sigmoid()
+        return output.view(batch_num)
 
 
 # Evaluation helper methods
@@ -178,7 +204,7 @@ class SentenceSentimentTrain:
                     X_val,
                     backend=BACKEND,
                 )
-                out = model.forward(x)
+                out = model.forward(x, ignore_dropout=True)
                 validation_predictions += get_predictions_array(y, out)
                 validation_accuracy.append(get_accuracy(validation_predictions))
                 model.train()
@@ -227,7 +253,6 @@ def encode_sentiment_data(dataset, pretrained_embeddings, N_train, N_val=0):
     max_sentence_len = 0
     for sentence in dataset["train"]["sentence"] + dataset["validation"]["sentence"]:
         max_sentence_len = max(max_sentence_len, len(sentence.split()))
-
     unks = set()
     unk_embedding = [
         0.1 * (random.random() - 0.5) for i in range(pretrained_embeddings.d_emb)

@@ -90,6 +90,8 @@ class FastTrain:
                 (loss / y.shape[0]).sum().view(1).backward()
 
                 total_loss = loss.sum().view(1)[0]
+                if total_loss > 1e5:
+                    print("strange loss!")
 
                 # Update
                 optim.step()

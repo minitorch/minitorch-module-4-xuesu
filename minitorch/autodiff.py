@@ -156,6 +156,8 @@ def backpropagate(variable: Variable, deriv: Any) -> None:
                     continue
                 # print("p_v->v", p_v.unique_id, "->", v.unique_id)
                 assert p_v.shape == p_d.shape or p_d.size == 1
+                if len([ele for ele in p_d._tensor._storage if ele != ele]) > 0:
+                    print("catch nan!")
                 if p_v.unique_id not in id2d:
                     id2d[p_v.unique_id] = p_d
                 else:

@@ -348,10 +348,9 @@ class MatMul(Function):
             order[-2], order[-1] = order[-1], order[-2]
             return a._new(a._tensor.permute(*order))
 
-        return (
-            grad_output.f.matrix_multiply(grad_output, transpose(t2)),
-            grad_output.f.matrix_multiply(transpose(t1), grad_output),
-        )
+        _ans1 = grad_output.f.matrix_multiply(grad_output, transpose(t2))
+        _ans2 = grad_output.f.matrix_multiply(transpose(t1), grad_output)
+        return _ans1, _ans2
 
 
 # Helpers for Constructing tensors

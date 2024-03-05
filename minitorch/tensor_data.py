@@ -82,19 +82,15 @@ def broadcast_index(
         big_shape : tensor shape of bigger tensor
         shape : tensor shape of smaller tensor
         out_index : multidimensional index of smaller tensor
-
-    Returns:
-        None
     """
     ext_dim = len(big_shape) - len(shape)
-    assert ext_dim >= 0
+    # assert ext_dim >= 0
     for i in range(ext_dim, len(big_shape)):
         if big_shape[i] != shape[i - ext_dim]:
             # assert big_shape[i] > shape[i - ext_dim] and shape[i - ext_dim] == 1
             out_index[i - ext_dim] = 0
         else:
             out_index[i - ext_dim] = big_index[i]
-    return
 
 
 def shape_broadcast(shape1: UserShape, shape2: UserShape) -> UserShape:

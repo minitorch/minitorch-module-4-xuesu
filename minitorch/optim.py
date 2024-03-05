@@ -31,6 +31,9 @@ class SGD(Optimizer):
             if hasattr(p.value, "derivative"):
                 if p.value.derivative is not None:
                     p.update(p.value - self.lr * p.value.derivative)
-            elif hasattr(p.value, "grad"):
-                if p.value.grad is not None:
-                    p.update(p.value - self.lr * p.value.grad)
+            # elif hasattr(p.value, "grad"):
+            assert p.value.grad is not None
+            p.update(p.value - self.lr * p.value.grad)
+            if abs(p.value._tensor._storage.sum()) > 1e6:
+                print("ERR: strange parameter !", p.name)
+            # print("value", p.value, "grad", p.value.grad)

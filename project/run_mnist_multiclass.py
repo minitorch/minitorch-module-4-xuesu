@@ -7,6 +7,7 @@ images, labels = mndata.load_training()
 
 BACKEND = minitorch.TensorBackend(minitorch.FastOps)
 BATCH = 16
+USE_CUDA_CONV = True
 
 # Number of classes (10 digits)
 C = 10
@@ -41,7 +42,10 @@ class Conv2d(minitorch.Module):
         self.bias = RParam(out_channels, 1, 1)
 
     def forward(self, input):
-        _ans = minitorch.fast_conv.conv2d(input, self.weights.value)
+        if USE_CUDA_CONV:
+            _ans = minitorch.cuda_conv.conv2d(input, self.weights.value)
+        else:
+            _ans = minitorch.fast_conv.conv2d(input, self.weights.value)
         _ans = _ans + self.bias.value
         return _ans
 
@@ -118,6 +122,8 @@ class ImageTrain:
     def train(
         self, data_train, data_val, learning_rate, max_epochs=500, log_fn=default_log_fn
     ):
+        if USE_CUDA_CONV:
+            print("USE_CUDA_CONV")
         (X_train, y_train) = data_train
         (X_val, y_val) = data_val
         self.model = Network()
@@ -192,4 +198,4 @@ class ImageTrain:
 
 if __name__ == "__main__":
     data_train, data_val = (make_mnist(0, 5000), make_mnist(10000, 10500))
-    ImageTrain().train(data_train, data_val, learning_rate=0.01)
+    ImageTrain().train(data_train, data_val, learning_rate=0.01, max_epochs=30)

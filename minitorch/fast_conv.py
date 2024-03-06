@@ -229,8 +229,7 @@ def _tensor_conv2d(
     s10, s11, s12, s13 = s1[0], s1[1], s1[2], s1[3]
     s20, s21, s22, s23 = s2[0], s2[1], s2[2], s2[3]
 
-    khid = -1 if reverse else 1
-    kwid = -1 if reverse else 1
+    kid = -1 if reverse else 1
     for i in prange(out_size):
         out_index = np.zeros(len(out_shape), dtype=np.int32)
         to_index(i, out_shape, out_index)
@@ -239,11 +238,11 @@ def _tensor_conv2d(
         tmp = 0.0
         for in_channel_i in range(in_channels):
             for khi in range(kh):
-                h_now = khi * khid + h_start
+                h_now = khi * kid + h_start
                 if not (0 <= h_now < height):
                     break
                 for kwi in range(kw):
-                    w_now = kwi * kwid + w_start
+                    w_now = kwi * kid + w_start
                     if not (0 <= w_now < width):
                         break
                     in_pos = (
@@ -255,6 +254,7 @@ def _tensor_conv2d(
                     # if debug:
                     #     print(reverse, i, out_pos,out_strides, "out[", batch_i, out_channel_i, h_start, w_start, "] += input[", batch_i, in_channel_i, h_now, w_now, "] * weight[", out_channel_i, in_channel_i, khi, kwi, "]", tmp, input[in_pos], weight[w_pos])
                     tmp += input[in_pos] * weight[w_pos]
+
         out[out_pos] = tmp
 
 

@@ -6,6 +6,7 @@ import minitorch
 from datasets import load_dataset
 
 BACKEND = minitorch.TensorBackend(minitorch.FastOps)
+USE_CUDA_CONV = True
 
 
 def RParam(*shape):
@@ -34,7 +35,10 @@ class Conv1d(minitorch.Module):
         self.bias = RParam(1, out_channels, 1)
 
     def forward(self, input):
-        output0 = minitorch.fast_conv.conv1d(input, self.weights.value)
+        if USE_CUDA_CONV:
+            output0 = minitorch.cuda_conv.conv1d(input, self.weights.value)
+        else:
+            output0 = minitorch.fast_conv.conv1d(input, self.weights.value)
         output = output0 + self.bias.value
         return output
 
@@ -154,6 +158,8 @@ class SentenceSentimentTrain:
         data_val=None,
         log_fn=default_log_fn,
     ):
+        if USE_CUDA_CONV:
+            print("USE_CUDA_CONV")
         model = self.model
         (X_train, y_train) = data_train
         n_training_samples = len(X_train)
@@ -283,7 +289,7 @@ if __name__ == "__main__":
     validation_size = 100
     learning_rate = 0.01
     max_epochs = 250
-
+    
     (X_train, y_train), (X_val, y_val) = encode_sentiment_data(
         load_dataset("glue", "sst2"),
         embeddings.GloveEmbedding("wikipedia_gigaword", d_emb=50, show_progress=True),

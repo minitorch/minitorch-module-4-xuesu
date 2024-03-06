@@ -1,4 +1,4 @@
-from . import cuda_ops, fast_ops  # noqa: F401,F403
+from . import cuda_ops, cuda_conv, fast_ops  # noqa: F401,F403
 from .autodiff import *  # noqa: F401,F403
 from .cuda_ops import *  # noqa: F401,F403
 from .datasets import *  # noqa: F401,F403

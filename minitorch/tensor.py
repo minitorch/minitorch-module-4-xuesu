@@ -56,6 +56,13 @@ class History:
     ctx: Optional[Context] = None
     inputs: Sequence[Tensor] = ()
 
+    def __repr__(self) -> str:
+        input_repr = [
+            repr(iv) if not isinstance(iv, Variable) else str(iv.unique_id)
+            for iv in self.inputs
+        ]
+        return f"History(last_fn={self.last_fn}, ctx={self.ctx}, inputs={','.join(input_repr)})"
+
 
 _tensor_count = 0
 
@@ -117,6 +124,14 @@ class Tensor:
              shape of the tensor
         """
         return self._tensor.shape
+
+    @property
+    def strides(self) -> Sequence[int]:
+        """
+        Returns:
+             tuple : strides of the tensor
+        """
+        return self._tensor.strides
 
     @property
     def size(self) -> int:
@@ -234,7 +249,7 @@ class Tensor:
         return Copy.apply(self)
 
     def __repr__(self) -> str:
-        return self._tensor.to_string()
+        return "unique_id: " + str(self.unique_id) + "," + self._tensor.to_string()
 
     def __getitem__(self, key: Union[int, UserIndex]) -> float:
         key2 = (key,) if isinstance(key, int) else key
